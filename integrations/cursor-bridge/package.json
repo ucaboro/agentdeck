@@ -1,0 +1,13 @@
+{
+  "name": "agentdeck-bridge",
+  "displayName": "AgentDeck Bridge",
+  "description": "Lets AgentDeck open, approve and start agent chats in Cursor.",
+  "publisher": "agentdeck",
+  "version": "0.2.2",
+  "license": "MIT",
+  "engines": { "vscode": "^1.80.0" },
+  "categories": ["Other"],
+  "extensionKind": ["ui"],
+  "activationEvents": ["onUri"],
+  "main": "./extension.js"
+}
