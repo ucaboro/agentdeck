@@ -17,6 +17,12 @@
   <img src="docs/images/agentdeck-overview.png" alt="AgentDeck overview: agent cards for Claude Code and Cursor showing status (waiting for approval, working, failed), project, branch, model and changes" width="900">
 </p>
 
+<p align="center">
+  <a href="docs/video/agentdeck-brag.mp4"><img src="docs/video/agentdeck-brag.jpg" alt="Watch the 23-second AgentDeck launch video" width="480"></a><br>
+  <a href="docs/video/agentdeck-brag.mp4">▶ Watch the 23-second launch video</a><br>
+  <sub>The video shows a recreation of the UI with made-up data. Music: "Happy Beats / Business Moves" by Sascha Ende (<a href="https://ende.app/en">ende.app</a>), CC BY 4.0.</sub>
+</p>
+
 ---
 
 ## Why AgentDeck?
