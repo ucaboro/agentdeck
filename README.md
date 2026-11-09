@@ -1,106 +1,219 @@
-# AgentDeck
+<h1 align="center">AgentDeck</h1>
 
-A native macOS command centre for local AI coding agents: **Claude Code** and **Cursor**.
-It uses the sign-ins you already have with those tools and adds no API keys or API billing.
+<p align="center">
+  <strong>A native macOS command centre for your local AI coding agents: Claude Code and Cursor.</strong><br>
+  See every agent at a glance, know the moment one needs you, and jump straight to it.
+</p>
 
-## Build & run
+<p align="center">
+  <a href="https://github.com/ucaboro/agentdeck/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/ucaboro/agentdeck/actions/workflows/ci.yml/badge.svg"></a>
+  <img alt="macOS 14+" src="https://img.shields.io/badge/macOS-14%2B-black?logo=apple">
+  <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white">
+  <img alt="No dependencies" src="https://img.shields.io/badge/dependencies-none-8B5CF6">
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
+</p>
+
+<p align="center">
+  <img src="docs/images/agentdeck-overview.png" alt="AgentDeck overview: agent cards for Claude Code and Cursor showing status (waiting for approval, working, failed), project, branch, model and changes" width="900">
+</p>
+
+---
+
+## Why AgentDeck?
+
+Running several coding agents at once means tabs everywhere: a Claude session in a terminal, two in the Claude app,
+Cursor chats in three windows. You can't tell which one is waiting for your approval, which finished, and which failed
+twenty minutes ago.
+
+AgentDeck finds those sessions on your Mac and puts them on one dashboard. It uses the sign-ins you already have,
+adds **no API keys and no API billing**, and keeps everything local.
+
+## Features
+
+- **One dashboard for Claude Code and Cursor.** Covers terminal sessions, background sessions, the Claude app's Code
+  tab, Cursor app chats and Cursor CLI chats, grouped by project with branch, model and real usage numbers
+  (`+214 −37 · 9 files · 84k context`).
+- **Know when an agent needs you.** Shows *Waiting for approval*, *Waiting for input*, *Failed* and *Completed*, with
+  macOS notifications and optional reminders when something has been waiting too long.
+- **Jump straight to the agent.** Click a card to open that exact session in the Claude app, the exact chat in Cursor,
+  or its terminal window.
+- **Answer Cursor approvals without switching apps.** Accept or reject from AgentDeck or straight from the notification
+  (needs the [AgentDeck Bridge](#agentdeck-bridge-cursor-extension)).
+- **Start agents** in the Claude app, the Cursor app, as a managed background session, or in your terminal, with the
+  exact command shown before anything runs.
+- **Quick switcher.** Press <kbd>⌘K</kbd>, or <kbd>⌥⌘K</kbd> from any app, type a few letters and press Return.
+- **Projects, pins and archive.** Git repos and worktrees are detected automatically. Pin what matters, drag to
+  reorder, archive finished work by hand or automatically.
+- **Activity log** with a daily summary of what your agents did.
+- **Honest controls.** AgentDeck only offers actions it can really perform, never bypasses an approval prompt, never
+  shows made-up progress, and never stops your agents when it quits.
+
+## Requirements
+
+- macOS 14 Sonoma or later
+- Xcode 16+ (Swift 6 toolchain) to build from source
+- At least one of:
+  - [Claude Code](https://docs.claude.com/en/docs/claude-code) (CLI and/or the Claude desktop app), signed in
+  - [Cursor](https://cursor.com) (the app and/or the `cursor-agent` CLI), signed in
+
+## Installation
+
+There are no pre-built releases yet. Build from source:
 
 ```bash
-./scripts/build-app.sh          # release build → build/AgentDeck.app (ad-hoc signed)
+git clone https://github.com/ucaboro/agentdeck.git
+cd agentdeck
+./scripts/build-app.sh       # release build → build/AgentDeck.app (ad-hoc signed)
 open build/AgentDeck.app
 ```
 
-Requires macOS 14+, Xcode 16+ / Swift 6 toolchain. No third-party dependencies.
+Move `build/AgentDeck.app` to `/Applications` if you want to keep it, for example to use launch at login.
 
-```bash
-swift test                      # fixture tests for the provider formats AgentDeck reads
-```
-The first time AgentDeck reads a project in a protected folder (e.g. ~/Documents), macOS asks for access. AgentDeck only reads git metadata there.
+## Getting started
 
-## Architecture
+1. **Open AgentDeck.** It starts finding sessions straight away. The first time it reads a project in a protected
+   folder such as `~/Documents`, macOS asks for access. AgentDeck only reads git metadata there.
+2. **Optional: turn on Claude Code hooks** in *Settings → Integrations → Claude Code*. This is what lets AgentDeck see
+   when a Claude session is waiting for your approval or input. See [Claude Code hooks](#claude-code-hooks-optional).
+3. **Optional: install the AgentDeck Bridge** in *Settings → Integrations → Cursor*. It lets AgentDeck open the exact
+   Cursor chat, answer approvals and start chats in the Cursor app. Then run *Developer: Restart Extension Host* in
+   Cursor.
 
-```
-Sources/AgentDeck/
-  App/             SwiftUI app, menus & shortcuts, menu-bar extra, AppDelegate (notifications, quit safety)
-  AgentCore/       Unified models (Agent, status, capabilities, events), AgentAdapter protocol, AgentManager
-  Adapters/Claude  ClaudeAdapter, transcript reader, opt-in hooks relay
-  Adapters/Cursor  CursorAdapter, ACP (Agent Client Protocol) JSON-RPC client
-  Process/         ProcessRunner (async CLI exec), ProcessInspector (libproc), TerminalLauncher, FSEvents watcher
-  Persistence/     SQLite wrapper + typed store (projects, agents, pins, events, settings)
-  Projects/        Git detection (incl. linked worktrees) without spawning git
-  DesignSystem/    Tokens (light/dark), status colours, shared components
-  Views/           Sidebar, dashboard, cards, inspector, activity, projects, settings, new-agent flow
-```
+### Keyboard shortcuts
 
-`AgentManager` (main actor) owns the adapters. It merges their snapshots into one registry, derives
-activity events and notifications from state changes, and persists everything to SQLite. Refreshes are
-event-driven (FSEvents on `~/.claude/projects`, `~/.cursor/chats` and the hook spool), with a configurable
-fallback poll. Adapters are isolated: if one throws, it only marks that provider as degraded.
-To add a provider, add a `ProviderKind` case and an `AgentAdapter` implementation; the UI doesn't change.
+| Shortcut | Action |
+|---|---|
+| <kbd>⌘N</kbd> | New agent |
+| <kbd>⌘K</kbd> · <kbd>⌥⌘K</kbd> (any app) | Jump to an agent |
+| <kbd>⌘F</kbd> | Search |
+| <kbd>⌘1</kbd>–<kbd>⌘5</kbd> | Overview, Pinned, Projects, Activity, Archived |
+| <kbd>⌘⇧A</kbd> · <kbd>⌘⇧W</kbd> | All agents · Needs attention |
+| <kbd>⌘↩</kbd> | Open the selected agent where it runs |
+| <kbd>⌘⇧P</kbd> · <kbd>⌘⌫</kbd> | Pin · Archive |
+| <kbd>⌘.</kbd> · <kbd>⌘R</kbd> · <kbd>⌘⌥I</kbd> | Interrupt · Refresh · Toggle inspector |
 
-**Managed** agents were launched by AgentDeck and can be controlled from it. **Monitored** (discovered) agents are only observed.
-Every action button comes from the agent's `AgentCapabilities`, so the UI never offers control it doesn't have.
+## How it works
 
-## Integrations
+AgentDeck only uses what each tool exposes locally: documented CLIs, local session files and, for Cursor, an optional
+extension. It never calls the Anthropic or Cursor APIs itself.
+
+**Managed** agents were started by AgentDeck and can be controlled from it. **Monitored** agents were found on your
+Mac and are observed; AgentDeck only shows the actions their provider really supports.
+
+<details>
+<summary><strong>Claude Code and Cursor CLIs</strong></summary>
 
 | | Claude Code | Cursor |
 |---|---|---|
-| Discovery | `claude agents --json --all` (live interactive + background sessions); recent transcripts for resumable sessions | `~/.cursor/chats/<md5(cwd)>/<id>/meta.json` + plain `meta` row of `store.db` (read-only; encrypted blobs never read); liveness inferred from running `cursor-agent` processes |
-| Launch (managed) | `claude --bg -n … [--model] [--permission-mode] [--worktree] <task>` | `cursor-agent acp`: `initialize` → `session/new` → `session/set_model`/`set_mode` → `session/prompt` |
+| Discovery | `claude agents --json --all` (live interactive and background sessions); recent transcripts for resumable sessions | `~/.cursor/chats/<md5(cwd)>/<id>/meta.json` and the plain `meta` row of `store.db` (read-only; encrypted data never read); "running" inferred from `cursor-agent` processes |
+| Launch (managed) | `claude --bg -n … [--model] [--permission-mode] [--worktree] <task>` | `cursor-agent acp`: `initialize` → `session/new` → `session/set_model` / `set_mode` → `session/prompt` |
 | Launch (terminal) | `claude --session-id <uuid> …` in your terminal | `cursor-agent --workspace … <task>` in your terminal |
-| Status | `busy`/`idle` + background `state`; permission prompts via optional hooks | ACP `session/update` (messages, tool calls, plan progress), `stopReason` |
-| Approvals | Answered in Claude Code (AgentDeck shows "waiting for approval") | ACP `session/request_permission` relayed to the inspector; you pick an option |
-| Stop / interrupt | `claude stop <id>` (background sessions) | `session/cancel`, process termination (ACP sessions) |
-| Focus / resume | Activate the hosting app; `claude attach <id>`; `claude --resume <session>` | Open workspace in Cursor; `cursor-agent --resume <chat>` |
-| Model | From session transcript (best effort) | ACP `currentModelId`; not exposed for terminal chats |
-| Auth | `claude auth status` (warns if not claude.ai auth) | `cursor-agent status` |
+| Status | `busy` / `idle` and background `state`; waiting states via optional hooks | ACP `session/update` (messages, tool calls, plan progress), `stopReason` |
+| Approvals | Answered in Claude Code; AgentDeck shows "Waiting for approval" | ACP `session/request_permission` relayed to the inspector |
+| Stop / interrupt | `claude stop <id>` (background sessions) | `session/cancel` (ACP sessions) |
+| Focus / resume | Activates the hosting app; `claude attach <id>`; `claude --resume <session>` | Opens the workspace in Cursor; `cursor-agent --resume <chat>` |
+| Auth check | `claude auth status` (warns if not subscription sign-in) | `cursor-agent status` |
 
-### Desktop apps
+</details>
+
+<details>
+<summary><strong>Claude app and Cursor app</strong></summary>
 
 | | Claude app (Code tab) | Cursor app |
 |---|---|---|
-| Discovery | Session files in `~/Library/Application Support/Claude/claude-code-sessions/…/local_*.json` map Claude sessions to the app (title, `local_` id) | `globalStorage/state.vscdb`: `composerHeaders` + `composerData:<id>` (name, folder, status, model, context %, lines changed), read-only via `json_extract` |
-| Running / waiting | From Claude Code (CLI listing + hooks) | Cursor doesn't save "running", so it's inferred from live message records (`bubbleId:<chat>:…`): a tool call `loading`, or a message in the last 90 s. A loading `ask_question` = waiting for input; `hasBlockingPendingActions` = waiting for approval |
-| Open exact session | `claude://code/continue?session=local_<id>` | AgentDeck Bridge: `composer.openComposer` |
-| Start new | `claude://code/new?folder=…&q=…` (opens prefilled; you press Enter) | AgentDeck Bridge: `composer.createNew` with the prompt, auto-submitted |
-| Approve / reject | Answered in the app | AgentDeck Bridge: `composer.accept/rejectPendingFromNotification` (inspector or notification buttons) |
+| Discovery | `~/Library/Application Support/Claude/claude-code-sessions/…/local_*.json` maps Claude sessions to the app | `globalStorage/state.vscdb` (`composerHeaders`, `composerData:<id>`), read-only, fields extracted inside SQLite with `json_extract` |
+| Running / waiting | From Claude Code (CLI listing and hooks) | Cursor doesn't save "running", so it's inferred from live message records: a tool call still `loading`, or a message in the last 90 s. An open question = waiting for input; `hasBlockingPendingActions` = waiting for approval |
+| Open exact session | `claude://code/continue?session=local_<id>` | AgentDeck Bridge → `composer.openComposer` |
+| Start new | `claude://code/new?folder=…&q=…` (opens prefilled; you press Enter) | AgentDeck Bridge → `composer.createNew`, prompt submitted |
+| Approve / reject | In the app | AgentDeck Bridge → Cursor's own approval commands |
+
+</details>
 
 ### AgentDeck Bridge (Cursor extension)
-`integrations/cursor-bridge/`: about 100 lines, no network access. It handles `cursor://agentdeck.agentdeck-bridge/open|decide|new`.
-`decide` and `new` act on your behalf, so they require a random token stored 0600 at
-`~/Library/Application Support/AgentDeck/bridge-token`. A web page or another app that knows the link format can't use them.
-Install it from Settings → Integrations → Cursor (it ships inside AgentDeck.app) or with `integrations/cursor-bridge/build.sh`.
-The bridge calls Cursor commands that aren't documented, so a Cursor update may break it. AgentDeck then falls back to bringing the right window forward.
 
-AgentDeck removes `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN` and `CURSOR_API_KEY` from the processes it spawns, so a launch can never quietly move to API billing.
+[`integrations/cursor-bridge`](integrations/cursor-bridge) is a small Cursor extension (about 130 lines, no network
+access) handling `cursor://agentdeck.agentdeck-bridge/open|decide|new`:
 
-### Optional Claude Code hooks
-Settings → Integrations → *Precise status via Claude Code hooks*. This adds a relay command to
-`~/.claude/settings.json` (a timestamped backup is written first) for SessionStart, UserPromptSubmit, Pre/PostToolUse,
+- `decide` and `new` act on your behalf, so they need a random token stored with owner-only permissions at
+  `~/Library/Application Support/AgentDeck/bridge-token`. A web page or another app that knows the link format can't
+  use them.
+- Cursor delivers links to the window you used last, so each link names its project folder. The bridge forwards it
+  once to the right window.
+- It logs what it receives (never the token or prompt text) to Cursor's *Output → AgentDeck Bridge* panel.
+
+Install it from *Settings → Integrations → Cursor* (it ships inside AgentDeck.app) or with
+`integrations/cursor-bridge/build.sh`.
+
+### Claude Code hooks (optional)
+
+*Settings → Integrations → Claude Code → Show when Claude is waiting for you* adds a relay command to
+`~/.claude/settings.json`, after writing a timestamped backup. It covers SessionStart, UserPromptSubmit, Pre/PostToolUse,
 PermissionRequest, Notification, Stop and SessionEnd. The relay only copies the hook payload into
 `~/Library/Application Support/AgentDeck/hooks/spool` and always exits 0, so it can never approve or block anything.
-Turning the toggle off removes exactly those entries.
+Turning the switch off removes exactly those entries.
+
+## Privacy and security
+
+- **Local only.** No telemetry, no accounts, no cloud services. Data lives in
+  `~/Library/Application Support/AgentDeck` with owner-only permissions.
+- **Metadata only.** AgentDeck stores session titles, status, timestamps, folders and branches. It never stores
+  credentials or conversation content.
+- **No API billing.** AgentDeck removes `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN` and `CURSOR_API_KEY` from every
+  process it starts, so a launch can't quietly switch to API billing.
+- **Read-only access to other apps' data.** Cursor's and Claude's local files are opened read-only.
+- **Nothing runs without you.** Every command AgentDeck runs is shown first, and approval prompts are never bypassed.
+
+Found a security issue? See [SECURITY.md](SECURITY.md).
 
 ## Known limitations
-- Cursor app chats come from Cursor's internal database, which may change. When a reader stops matching, Settings and the status bar show a warning instead of chats silently disappearing.
-- A Cursor run's end is detected up to ~90 s late, because Cursor doesn't save "running".
-- Without the bridge, opening a Cursor app chat brings the right window forward but can't select the chat.
-- Claude app sessions started from AgentDeck open prefilled; you start them in the app.
-- Cursor CLI chats started in a terminal expose no model or live state. "Running" is inferred from processes.
-- Interactive Claude Code sessions belong to their terminal or the Claude app. AgentDeck can bring that app forward but can't stop them.
-- Claude transcripts aren't a stable API, so model, title and branch are read best-effort.
-- ACP agents are child processes of AgentDeck and end when it quits (you're asked to confirm). Their chats stay resumable.
-- `session/list` over ACP doesn't currently return CLI chats, so discovery reads the local chat store instead.
 
-## Privacy
-All data stays local in `~/Library/Application Support/AgentDeck` (owner-only permissions). AgentDeck stores
-metadata only: no credentials and no conversation content. No telemetry.
+- AgentDeck reads some **undocumented local formats** (Claude transcripts, Claude app session files, Cursor's state
+  database). An update to either tool can change them. When a reader stops matching, Settings and the status bar show a
+  warning instead of agents silently disappearing.
+- A Cursor run's end is detected up to about 90 s late, because Cursor doesn't save "running".
+- The Cursor bridge calls Cursor commands that aren't documented. If an update breaks them, opening a chat falls back
+  to bringing the right window forward.
+- Interactive Claude Code sessions belong to their terminal or the Claude app. AgentDeck can bring them forward but
+  can't stop them. Background sessions (`claude --bg`) can be stopped.
+- Agents started in AgentDeck via Cursor ACP are child processes and end when AgentDeck quits (you're asked first).
+  Their chats stay resumable.
 
-## Shortcuts
-⌘N new agent · ⌘K / ⌥⌘K (any app) jump to an agent · ⌘F search · ⌘1–4 sections · ⌘⇧A all agents · ⌘⇧W needs attention ·
-⌘↩ focus · ⌘⇧P pin · ⌘. interrupt · ⌘R refresh · ⌘⌥I inspector
+## Development
 
-## Development aids
-- `AGENTDECK_DEBUG=1`: refresh diagnostics on stderr.
-- `--snapshot <png> [delay]`: render the main window to a PNG (`AGENTDECK_SECTION=settings|activity|projects|all`).
-- `--dev-launch <claude|cursor> <dir> <mode> <task>`: exercise the managed launch path without the UI.
+```bash
+swift build                  # debug build
+swift test                   # fixture tests for the provider formats AgentDeck reads
+./scripts/build-app.sh       # release .app bundle (includes the Cursor bridge .vsix)
+```
+
+```text
+Sources/AgentDeck/
+  App/            SwiftUI app, menus and shortcuts, menu bar extra, notifications
+  AgentCore/      Agent model, AgentAdapter protocol, AgentManager (registry, events, reminders, archive)
+  Adapters/       Claude (CLI, transcripts, Claude app sessions, hooks) · Cursor (ACP, CLI chats, Cursor app chats)
+  Process/        Async process runner, libproc inspection, terminal launcher, FSEvents watcher
+  Persistence/    SQLite store for projects, agents, pins, events and settings
+  Projects/       Git detection (including linked worktrees) and GitHub / GitLab / Bitbucket links
+  DesignSystem/   Colour tokens (light and dark) and shared components
+  Views/          Dashboard, cards, inspector, new agent, activity, projects, settings, quick switcher
+Tests/            Fixture tests for Claude and Cursor formats, status rules, git links
+integrations/     AgentDeck Bridge for Cursor
+```
+
+To add a provider, add a `ProviderKind` case and an `AgentAdapter` implementation; the UI doesn't change.
+
+Useful flags: `AGENTDECK_DEBUG=1` prints refresh diagnostics; `--snapshot <png> [delay]` renders the main window to a
+PNG; `--dev-launch <claude|cursor> <dir> <mode> <task>` exercises the managed launch path without the UI.
+
+## Contributing
+
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and follow the
+[Code of Conduct](CODE_OF_CONDUCT.md). Bug reports and feature requests go in
+[Issues](https://github.com/ucaboro/agentdeck/issues).
+
+## License
+
+[MIT](LICENSE) © Anton Morozov
+
+AgentDeck is an independent project and is not affiliated with or endorsed by Anthropic or Anysphere (Cursor).
+Claude, Claude Code and Cursor are trademarks of their respective owners.
