@@ -1,0 +1,55 @@
+name: Bug report
+description: Something in AgentDeck doesn't work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please don't include conversation content, tokens or private paths.
+        Security issues: use [private vulnerability reporting](https://github.com/ucaboro/agentdeck/security/advisories/new) instead.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what you saw instead.
+    validations:
+      required: true
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Which integration?
+      multiple: true
+      options:
+        - Claude Code (terminal / background)
+        - Claude app (Code tab)
+        - Cursor app
+        - Cursor CLI / ACP
+        - AgentDeck Bridge (Cursor extension)
+        - Not provider-specific
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. …
+        2. …
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: e.g. macOS 26.6
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Tool versions
+      description: Output of `claude --version`, `cursor-agent --version`, Cursor → About, AgentDeck version (status bar).
+  - type: textarea
+    id: logs
+    attributes:
+      label: Diagnostics (optional)
+      description: Warnings from Settings → Integrations, `AGENTDECK_DEBUG=1` output, or Cursor's Output → AgentDeck Bridge panel. Redact anything private.
+      render: text

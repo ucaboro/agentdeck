@@ -1,0 +1,26 @@
+name: Feature request
+description: Suggest an idea for AgentDeck
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the situation, for example "When I run several Claude sessions I can't tell…".
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: provider-support
+    attributes:
+      label: Does the provider expose this?
+      description: AgentDeck only uses what Claude Code / Cursor really expose (CLI commands, local files, documented links). Link docs or describe where the data lives, if you know.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you've considered
