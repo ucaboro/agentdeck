@@ -5,6 +5,13 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- `scripts/install.sh`: one-step, re-runnable installer with requirement checks and exit codes.
+- `INSTALL.md` with step-by-step instructions for AI coding agents, and a copy-paste install prompt in the README.
+
+### Fixed
+- `build-app.sh` builds for the Mac's own architecture, so it works on Intel Macs too.
+
 ## [0.1.0] - 2026-11-09
 
 ### Added

@@ -6,8 +6,9 @@ VERSION="${VERSION:-0.1.0}"
 BUILD_NUMBER="${BUILD_NUMBER:-$(date +%Y%m%d%H%M)}"
 APP="build/AgentDeck.app"
 
-swift build -c release --arch arm64
-BIN="$(swift build -c release --arch arm64 --show-bin-path)/AgentDeck"
+ARCH="${ARCH:-$(uname -m)}"   # arm64 (Apple silicon) or x86_64 (Intel)
+swift build -c release --arch "$ARCH"
+BIN="$(swift build -c release --arch "$ARCH" --show-bin-path)/AgentDeck"
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"

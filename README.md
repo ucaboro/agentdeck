@@ -58,16 +58,31 @@ adds **no API keys and no API billing**, and keeps everything local.
 
 ## Installation
 
-There are no pre-built releases yet. Build from source:
+There are no pre-built releases yet. One script checks requirements, builds from source and installs to
+`/Applications`:
 
 ```bash
 git clone https://github.com/ucaboro/agentdeck.git
 cd agentdeck
-./scripts/build-app.sh       # release build → build/AgentDeck.app (ad-hoc signed)
-open build/AgentDeck.app
+./scripts/install.sh                       # add --with-cursor-bridge if you use the Cursor app
 ```
 
-Move `build/AgentDeck.app` to `/Applications` if you want to keep it, for example to use launch at login.
+It's safe to run again to update. Options, exit codes and uninstall steps are in [INSTALL.md](INSTALL.md).
+
+### Install with an AI coding agent
+
+Paste this into Claude Code, Cursor or another coding agent running on your Mac:
+
+```text
+Install AgentDeck on this Mac by following https://github.com/ucaboro/agentdeck/blob/main/INSTALL.md
+("Instructions for AI coding agents"). Clone it to ~/agentdeck, run ./scripts/install.sh --check first,
+then ./scripts/install.sh, and verify it's installed and running. Ask me before installing the Cursor
+bridge or anything else not covered there. Don't change my Claude or Cursor settings, don't use sudo,
+and tell me what each step did.
+```
+
+The agent follows [INSTALL.md](INSTALL.md), which spells out each step, how to check it worked, and what it must not do
+without asking (edit your settings, sign in, use `sudo`, change the source).
 
 ## Getting started
 
@@ -183,7 +198,8 @@ Found a security issue? See [SECURITY.md](SECURITY.md).
 ```bash
 swift build                  # debug build
 swift test                   # fixture tests for the provider formats AgentDeck reads
-./scripts/build-app.sh       # release .app bundle (includes the Cursor bridge .vsix)
+./scripts/build-app.sh       # release .app bundle in build/ (includes the Cursor bridge .vsix)
+./scripts/install.sh         # build and install to /Applications
 ```
 
 ```text
